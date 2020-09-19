@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/gorilla/schema"
@@ -43,22 +44,30 @@ func TestFilterSchema(t *testing.T) {
 	paginating := "&limit=50&orderby=name&direct=ASC"
 
 	t.Run("findAtLeastOne", func(t *testing.T) {
-		cases := []string{
-			"http://example.com/products?name=eq.TOWING" + paginating,
-			"http://example.com/products?updated_at=eq.2020-08-31T01:40:09.158813Z" + paginating,
+		cases := []struct {
+			in, wantContains string
+		}{
+			{"http://example.com/products?name=eq.TOWING" + paginating, "name ="},
+			{"http://example.com/products?updated_at=eq.2020-08-31T01:40:09.158813Z" + paginating, "updated_at ="},
+			{"http://example.com/products?name=lk.YUBA" + paginating, "name LIKE"},
 		}
-		for _, strURL := range cases {
+		for _, c := range cases {
 
-			r, err := url.Parse(strURL)
+			r, err := url.Parse(c.in)
 			if err != nil {
 				log.Fatal(err)
 			}
+
 			sql, args, err := builder.BuildSQLQuery("public", r.Query())
 			if err != nil {
-				t.Fatal(strURL, err)
+				t.Fatal(c.in, err)
 			}
 
+			if !strings.Contains(sql, c.wantContains) {
+				t.Errorf("expected sql containing: %s. Not found at: %s", c.wantContains, sql)
+			}
 			t.Log(sql, args)
+
 		}
 	})
 

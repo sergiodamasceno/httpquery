@@ -33,7 +33,29 @@ func (qb *QueryBuilder) BuildSQLQuery(schema string, values url.Values) (string,
 	sqBuilder := sq.Select("*").From(fmt.Sprintf("%s.%s", schema, qb.table))
 	for key, value := range values {
 		if _, ok := qb.columns[key]; ok {
-			sqBuilder = sqBuilder.Where(getCond(key, value[0]))
+
+			valueWithPoint := value[0]
+			i := strings.Index(valueWithPoint, ".")
+			op := valueWithPoint[:i]
+			v := valueWithPoint[i+1:]
+
+			switch op {
+			case "lk":
+				sqBuilder = sqBuilder.Where(sq.Like{key: v})
+			case "gt":
+				sqBuilder = sqBuilder.Where(sq.Gt{key: v})
+			case "ne":
+				sqBuilder = sqBuilder.Where(sq.NotEq{key: v})
+			case "gte":
+				sqBuilder = sqBuilder.Where(sq.GtOrEq{key: v})
+			case "lt":
+				sqBuilder = sqBuilder.Where(sq.Lt{key: v})
+			case "lte":
+				sqBuilder = sqBuilder.Where(sq.LtOrEq{key: v})
+			default:
+				sqBuilder = sqBuilder.Where(sq.Eq{key: v})
+			}
+
 		}
 	}
 
@@ -42,29 +64,4 @@ func (qb *QueryBuilder) BuildSQLQuery(schema string, values url.Values) (string,
 	sqBuilder = sqBuilder.OrderBy(fmt.Sprintf("%s %s", paginating.OrderBy, paginating.Direction))
 
 	return sqBuilder.PlaceholderFormat(sq.Dollar).ToSql()
-}
-
-func getCond(column, value string) map[string]interface{} {
-
-	i := strings.Index(value, ".")
-	op := value[:i]
-	v := value[i+1:]
-	log.Println(op, v)
-
-	switch op {
-	case "lk":
-		return sq.Like{column: v}
-	case "gt":
-		return sq.Gt{column: v}
-	case "ne":
-		return sq.NotEq{column: v}
-	case "gte":
-		return sq.GtOrEq{column: v}
-	case "lt":
-		return sq.Lt{column: v}
-	case "lte":
-		return sq.LtOrEq{column: v}
-	}
-
-	return sq.Eq{column: v}
 }
