@@ -50,6 +50,7 @@ func TestFilterSchema(t *testing.T) {
 			{"http://example.com/products?name=eq.TOWING" + paginating, "name ="},
 			{"http://example.com/products?updated_at=eq.2020-08-31T01:40:09.158813Z" + paginating, "updated_at ="},
 			{"http://example.com/products?name=lk.YUBA" + paginating, "name LIKE"},
+			{"http://example.com/products?name=ilk.YUBA" + paginating, "name ILIKE"},
 		}
 		for _, c := range cases {
 
