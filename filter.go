@@ -41,9 +41,9 @@ func (qb *QueryBuilder) BuildSQLQuery(schema string, values url.Values) (string,
 
 			switch op {
 			case "ilk":
-				sqBuilder = sqBuilder.Where(sq.ILike{key: v})
+				sqBuilder = sqBuilder.Where(sq.ILike{key: v + "%"})
 			case "lk":
-				sqBuilder = sqBuilder.Where(sq.Like{key: v})
+				sqBuilder = sqBuilder.Where(sq.Like{key: v + "%"})
 			case "gt":
 				sqBuilder = sqBuilder.Where(sq.Gt{key: v})
 			case "ne":
